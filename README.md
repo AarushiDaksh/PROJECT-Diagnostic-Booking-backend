@@ -93,7 +93,7 @@ Stop the application:
 | PATCH | `/bookings/:id/cancel` | Yes | Cancel a booking |
 | POST | `/payments` | Yes | Create simulated payment |
 | POST | `/payments/webhook` | No | Process payment webhook |
-| GET | `/health` | No | API health check |
+| GET | `/home` | No | API health check |
 
 ## Authentication
 
