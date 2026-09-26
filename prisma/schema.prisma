@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  bookings     Booking[]
+}
+
+model DiagnosticCentre {
+  id        String       @id @default(cuid())
+  name      String       @unique
+  location  String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  bookings  Booking[]
+  tests     CentreTest[]
+}
+
+model DiagnosticTest {
+  id        String       @id @default(cuid())
+  name      String
+  code      String       @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  bookings  Booking[]
+  centres   CentreTest[]
+}
+
+model CentreTest {
+  id       String           @id @default(cuid())
+  centreId String
+  testId   String
+  price    Decimal          @db.Decimal(10, 2)
+  centre   DiagnosticCentre @relation(fields: [centreId], references: [id], onDelete: Cascade)
+  test     DiagnosticTest   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@unique([centreId, testId])
+}
+
+model Booking {
+  id          String           @id @default(cuid())
+  userId      String
+  testId      String
+  centreId    String
+  appointment DateTime
+  amount      Decimal          @db.Decimal(10, 2)
+  status      BookingStatus    @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  centre      DiagnosticCentre @relation(fields: [centreId], references: [id])
+  test        DiagnosticTest   @relation(fields: [testId], references: [id])
+  user        User             @relation(fields: [userId], references: [id])
+  payments    Payment?
+
+  @@index([userId])
+  @@index([appointment])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  bookingId       String        @unique
+  providerEventId String        @unique
+  amount          Decimal       @db.Decimal(10, 2)
+  status          PaymentStatus
+  createdAt       DateTime      @default(now())
+  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+}
